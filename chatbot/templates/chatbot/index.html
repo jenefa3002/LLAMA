@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ari II</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      .chatbot-button {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        background-color: #4361ee;
+        color: white;
+        border: none;
+        padding: 15px;
+        border-radius: 50%;
+        font-size: 18px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1000;
+      }
+      .chatbot-button:hover {
+        background-color: #3a56d4;
+        transform: scale(1.1);
+      }
+      .chatbot-panel {
+        display: none;
+        position: fixed;
+        bottom: 100px;
+        right: 20px;
+        width: 300px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        z-index: 1000;
+        transition: all 0.3s ease;
+      }
+      .chatbot-header {
+        background-color: #4361ee;
+        color: white;
+        padding: 12px;
+        text-align: center;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .chatbot-close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .chatbot-close-btn:hover {
+        transform: scale(1.2);
+      }
+      .chatbot-body {
+        padding: 12px;
+        height: 300px;
+        overflow-y: auto;
+        background: linear-gradient(to bottom, #f8f9fc, #e3e6f0);
+        display: flex;
+        flex-direction: column;
+      }
+      .chatbot-footer {
+        display: flex;
+        padding: 12px;
+        border-top: 1px solid #ddd;
+        background: white;
+      }
+      .chatbot-footer input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        outline: none;
+        transition: border 0.3s;
+      }
+      .chatbot-footer input:focus {
+        border-color: #4361ee;
+      }
+      .chatbot-footer button {
+        background: #4361ee;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        margin-left: 8px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .chatbot-footer button:hover {
+        background-color: #3a56d4;
+        transform: scale(1.05);
+      }
+      .chatbot-message {
+        max-width: 85%;
+        padding: 10px 15px;
+        border-radius: 18px;
+        margin: 6px 0;
+        font-size: 14px;
+        word-wrap: break-word;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        animation: fadeIn 0.3s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .chatbot-user-message {
+        align-self: flex-end;
+        background: linear-gradient(to right, #4361ee, #3a0ca3);
+        color: white;
+        border-bottom-right-radius: 5px;
+      }
+      .chatbot-bot-message {
+        align-self: flex-start;
+        background: linear-gradient(to right, #f8f9fa, #e9ecef);
+        color: #333;
+        border-bottom-left-radius: 5px;
+      }
+      .chatbot-error-message {
+        align-self: center;
+        background: #ffebee;
+        color: #c62828;
+        border-radius: 18px;
+      }
+      .feedback-buttons {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 8px;
+        gap: 6px;
+      }
+      .feedback-btn {
+        background: none;
+        border: 1px solid;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 12px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .helpful-btn {
+        color: #4caf50;
+        border-color: #4caf50;
+      }
+      .helpful-btn:hover {
+        background-color: #4caf50;
+        color: white;
+      }
+      .not-helpful-btn {
+        color: #f44336;
+        border-color: #f44336;
+      }
+      .not-helpful-btn:hover {
+        background-color: #f44336;
+        color: white;
+      }
+      .typing-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding-left: 5px;
+      }
+      .typing-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        animation: typing 1.2s infinite ease-in-out;
+      }
+      .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes typing {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+      .timestamp {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-top: 3px;
+        text-align: right;
+      }
+      .chatbot-welcome {
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 13px;
+        color: #666;
+      }
+      .sources {
+        font-size: 10px;
+        opacity: 0.7;
+        margin-top: 3px;
+        text-align: left;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="chatbot-btn" class="chatbot-button" aria-label="Open Chatbot">
+      <i class="fas fa-robot"></i>
+    </button>
+    <div id="chatbot-panel" class="chatbot-panel">
+      <div class="chatbot-header">
+        <span><i class="fas fa-robot"></i> Ari II</span>
+        <button
+          id="chatbot-close-btn"
+          class="chatbot-close-btn"
+          aria-label="Close Chatbot"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="chatbot-body" id="chatbot-body">
+        <div class="chatbot-welcome">
+          Hello I'm Ari. Your Chatbot Assistent!!
+        </div>
+      </div>
+      <div class="chatbot-footer">
+        <input
+          type="text"
+          id="chatbot-input"
+          placeholder="Type Here..."
+          aria-label="Type your message"
+          autocomplete="off"
+        />
+        <button id="chatbot-send-btn" aria-label="Send Message">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + "=") {
+              cookieValue = decodeURIComponent(
+                cookie.substring(name.length + 1)
+              );
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      function formatTimestamp() {
+        const now = new Date();
+        return now.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      function addMessage(text, sender, sources) {
+        const chatBody = document.getElementById("chatbot-body");
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add(
+          "chatbot-message",
+          "chatbot-" + sender + "-message"
+        );
+        let messageHTML = `${text}<div class="timestamp">${formatTimestamp()}</div>`;
+
+        if (sources && sources.length) {
+          messageHTML += `<div class="sources">Sources: Pages ${sources.join(
+            ", "
+          )}</div>`;
+        }
+
+        messageDiv.innerHTML = messageHTML;
+        chatBody.appendChild(messageDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }
+
+      function showTypingIndicator() {
+        const chatBody = document.getElementById("chatbot-body");
+        const typingDiv = document.createElement("div");
+        typingDiv.id = "typing-indicator";
+        typingDiv.className = "chatbot-message chatbot-bot-message";
+        typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+        chatBody.appendChild(typingDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }
+
+      function hideTypingIndicator() {
+        const typingIndicator = document.getElementById("typing-indicator");
+        if (typingIndicator) {
+          typingIndicator.remove();
+        }
+      }
+
+      function sendMessage() {
+        const input = document.getElementById("chatbot-input");
+        const msg = input.value.trim();
+        if (!msg) return;
+        addMessage(msg, "user");
+        input.value = "";
+        showTypingIndicator();
+
+        const csrftoken = getCookie("csrftoken");
+
+        $.ajax({
+          url: "/api/chat/",
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrftoken,
+          },
+          data: { question: msg },
+          success: function (response) {
+            hideTypingIndicator();
+            addMessage(response.answer, "bot", response.sources);
+          },
+          error: function () {
+            hideTypingIndicator();
+            addMessage(
+              "Sorry, I encountered an error while processing your question.",
+              "error"
+            );
+          },
+        });
+      }
+
+      function toggleChatbot() {
+        const panel = document.getElementById("chatbot-panel");
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
+        if (panel.style.display === "block") {
+          document.getElementById("chatbot-input").focus();
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        setTimeout(() => {
+          addMessage("Hello! I'm your Ari. How can I help you today?", "bot");
+        }, 500);
+
+        document
+          .getElementById("chatbot-input")
+          .addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+              sendMessage();
+            }
+          });
+        document
+          .getElementById("chatbot-send-btn")
+          .addEventListener("click", sendMessage);
+        document
+          .getElementById("chatbot-btn")
+          .addEventListener("click", toggleChatbot);
+        document
+          .getElementById("chatbot-close-btn")
+          .addEventListener("click", toggleChatbot);
+      });
+    </script>
+  </body>
+</html>
